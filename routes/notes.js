@@ -33,7 +33,7 @@ router.get('/', (req, res, next) => {
 /* ========== GET/READ A SINGLE ITEM ========== */
 router.get('/:id', (req, res, next) => {
 
-  const { id } = req.params.id;
+  const { id } = req.params;
   
   Note.findById(id)
     .then(notes => res.json(notes))
@@ -66,12 +66,16 @@ router.put('/:id', (req, res, next) => {
  
   const updateObj = { title, content};
 
-  Note.findByIdAndUpdate(id, updateObj)
-    .then(note => {
-      res.json(note);
+  Note.findByIdAndUpdate(id, updateObj, { new: true })
+    .then(result => {
+      if (result) {
+        res.json(result);
+      } else {
+        next();
+      }
     })
     .catch(err => {
-      return next(err);
+      next(err);
     });
 });
 
