@@ -4,46 +4,86 @@ const express = require('express');
 
 const router = express.Router();
 
+const Note = require('../models/note');
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/', (req, res, next) => {
+  const { searchTerm } = req.query;
+  let filter = {};
+  if(searchTerm) {
+    filter = {
+      $or: [
+        {title: {$regex: searchTerm, $options: 'i'}},
+        {content: {$regex: searchTerm, $options: 'i'}}
+      ]
+    };
+  }
 
-  console.log('Get All Notes');
-  res.json([
-    { id: 1, title: 'Temp 1' },
-    { id: 2, title: 'Temp 2' },
-    { id: 3, title: 'Temp 3' }
-  ]);
+  Note
+    .find(filter)
+    .sort({updatedAt: 'desc'})
+    .then(notes => 
+      res.json(notes))
+    
+    .catch(err => {
+      return next(err);
+    });
 
 });
 
 /* ========== GET/READ A SINGLE ITEM ========== */
 router.get('/:id', (req, res, next) => {
 
-  console.log('Get a Note');
-  res.json({ id: 1, title: 'Temp 1' });
-
+  const { id } = req.params.id;
+  
+  Note.findById(id)
+    .then(notes => res.json(notes))
+    .catch(err => next(err));
 });
 
 /* ========== POST/CREATE AN ITEM ========== */
 router.post('/', (req, res, next) => {
+  const { title, content } = req.body;
+  
+  const newNote = { title, content };
 
-  console.log('Create a Note');
-  res.location('path/to/new/document').status(201).json({ id: 2, title: 'Temp 2' });
+  Note.create(newNote)
+    .then(result => {
+      res.location(`${req.originalUrl}/${result.id}`)
+        .status(201)
+        .json(result);
+    })
+    .catch(err => {
+      next(err);
+    });
 
 });
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
 router.put('/:id', (req, res, next) => {
+  const { id } = req.params;
+  
+  const { title, content } = req.body;
+ 
+  const updateObj = { title, content};
 
-  console.log('Update a Note');
-  res.json({ id: 1, title: 'Updated Temp 1' });
-
+  Note.findByIdAndUpdate(id, updateObj)
+    .then(note => {
+      res.json(note);
+    })
+    .catch(err => {
+      return next(err);
+    });
 });
 
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
 router.delete('/:id', (req, res, next) => {
 
-  console.log('Delete a Note');
+  const { id } = req.params;
+
+  Note
+    .findByIdAndDelete(id)
+    .then(() => res.sendStatus(204))
+    .catch(err => next(err));
   res.sendStatus(204);
 });
 
