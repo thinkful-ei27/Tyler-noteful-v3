@@ -102,10 +102,10 @@ router.put('/:id', (req, res, next) => {
 
 router.delete('/:id', (req, res, next) => {
   const { id } = req.params;
-  Folder.findByIdAndDelete(id)
+  Folder.findByIdAndRemove(id)
     .then(() => res.sendStatus(204))
     .catch(err => next(err));
-  res.sendStatus(204);
+  
 });
 
 
